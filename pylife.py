@@ -6,15 +6,13 @@ from ctypes import *
 from sdl2 import *
 from copy import deepcopy
 
-PIX_ON = 255
+PIX_ON = 0xFFFFFF
 PIX_OFF = 0
 pixel_states = [PIX_ON, PIX_OFF]
 grid_size = 100
-i_update = 60
 
 
 def randomGrid(N):
-    """returns a grid of NxN random values"""
     return np.random.choice(pixel_states, N*N, p=[0.10, 0.90]).reshape(N, N)
 
 
@@ -30,7 +28,7 @@ def update(grid, N):
             total = int((grid[i, (j-1) % N] + grid[i, (j+1) % N] +
                          grid[(i-1) % N, j] + grid[(i+1) % N, j] +
                          grid[(i-1) % N, (j-1) % N] + grid[(i-1) % N, (j+1) % N] +
-                         grid[(i+1) % N, (j-1) % N] + grid[(i+1) % N, (j+1) % N])/255)
+                         grid[(i+1) % N, (j-1) % N] + grid[(i+1) % N, (j+1) % N])/0xFFFFFF)
             # apply Conway's rules
             if grid[i, j] == PIX_ON:
                 if (total < 2) or (total > 3):
@@ -50,7 +48,7 @@ def main():
 
     window = SDL_CreateWindow(b"PyLife",
                               SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              grid_size, grid_size, SDL_WINDOW_SHOWN)
+                              grid_size * 4, grid_size * 4, SDL_WINDOW_SHOWN)
 
     windowsurface = SDL_GetWindowSurface(window)
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED)
