@@ -1,8 +1,8 @@
-import time
 import numpy as np
 import sys
 import ctypes
 import sdl2.ext
+import time
 from ctypes import *
 from sdl2 import *
 from copy import deepcopy
@@ -13,59 +13,73 @@ pixel_states = [PIX_ON, PIX_OFF]
 grid_size = 200
 
 
-def randomGrid(N):
-    return np.random.choice(pixel_states, N*N, p=[0.10, 0.90]).reshape(N, N)
+def seed(size):
+    return np.random.choice(pixel_states, size*size, p=[0.15, 0.85]).reshape(size, size)
 
 
-def update(grid, N):
-    # copy grid since we require 8 neighbors for calculation
-    # and we go line by line
-    newGrid = deepcopy(grid)
-    for i in range(N):
-        for j in range(N):
-            # compute 8-neghbor sum
-            # using toroidal boundary conditions - x and y wrap around
-            # so that the simulaton takes place on a toroidal surface.
-            total = int((grid[i, (j-1) % N] + grid[i, (j+1) % N] +
-                         grid[(i-1) % N, j] + grid[(i+1) % N, j] +
-                         grid[(i-1) % N, (j-1) % N] + grid[(i-1) % N, (j+1) % N] +
-                         grid[(i+1) % N, (j-1) % N] + grid[(i+1) % N, (j+1) % N])/PIX_ON)
-            # apply Conway's rules
-            if grid[i, j] == PIX_ON:
+def conway_update(board, size):
+
+    #create a copy of the game board
+    newBoard = deepcopy(board)
+
+    #iterate through each row + col
+    for i in range(size):
+        for j in range(size):
+
+            #computer number of neighbors with wrapping
+            total = int((board[i, (j-1) % size] + 
+                         board[i, (j+1) % size] +
+                         board[(i-1) % size, j] + 
+                         board[(i+1) % size, j] +
+                         board[(i-1) % size, (j-1) % size] + 
+                         board[(i-1) % size, (j+1) % size] +
+                         board[(i+1) % size, (j-1) % size] + 
+                         board[(i+1) % size, (j+1) % size])/PIX_ON)
+
+            #default rules
+            if board[i, j] == PIX_ON:
                 if (total < 2) or (total > 3):
-                    newGrid[i, j] = PIX_OFF
+                    newBoard[i, j] = PIX_OFF
             else:
                 if total == 3:
-                    newGrid[i, j] = PIX_ON
-    # update data
-    # img.set_data(newGrid)
-    grid[:] = newGrid[:]
+                    newBoard[i, j] = PIX_ON
+
+    #set board to new updated state
+    board[:] = newBoard[:]
 
 
 def main():
     print("Game of Life by George Conway.")
-
-    SDL_Init(SDL_INIT_VIDEO)
-
-    scale = 2
-
-    window = SDL_CreateWindow(b"PyLife",
-                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              grid_size * scale, grid_size * scale, SDL_WINDOW_SHOWN)
-
-    windowsurface = SDL_GetWindowSurface(window)
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED)
-    texture = SDL_CreateTexture(
-        renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, grid_size, grid_size)
-
-    game_board = np.array([])
-
-    game_board = randomGrid(grid_size)
-    print("Board Initalized")
-
+    print("(C) 2020 Alex Oberhofer")
+    
+    #init 
     iterations = 0
     running = True
+    scale = 2
+
+    #Setup SDL
+    SDL_Init(SDL_INIT_VIDEO)
+
+    #Create Window
+    window = SDL_CreateWindow(b"PyLife", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                              grid_size * scale, grid_size * scale, SDL_WINDOW_SHOWN)
+
+    #create renderer                          
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED)
+
+    #create our texture
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, grid_size, grid_size)
+
+    print("Display Initialized...")
+    game_board = np.array([])
+
+    game_board = seed(grid_size)
+    print("Board Initalized...")
+
+
     while running:
+
+        #event polling
         events = sdl2.ext.get_events()
 
         for event in events:
@@ -74,10 +88,11 @@ def main():
                 break
         
         #iterate board state
-        update(game_board, grid_size)
+        conway_update(game_board, grid_size)
         iterations += 1
 
-        new_title = b"PyLife                      Iteration - " + str(iterations).encode('utf-8')
+        #update title with iterations
+        new_title = b"||    PyLife: Conway      ||  Iteration - " + str(iterations).encode('utf-8') + b"    ||"
         SDL_SetWindowTitle(window, new_title)
 
         #convert to 2d to contiguous array
@@ -92,8 +107,7 @@ def main():
         SDL_RenderCopy(renderer, texture, None, None)
         SDL_RenderPresent(renderer)
         SDL_UpdateWindowSurface(window)
-        
-        print("Iteration: " + str(iterations))
+        time.sleep(1/5000)
 
 
 # call main
