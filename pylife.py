@@ -2,13 +2,14 @@ import time
 import numpy as np
 import sys
 import ctypes
+from ctypes import *
 from sdl2 import *
 from copy import deepcopy
 
 PIX_ON = 255
 PIX_OFF = 0
 pixel_states = [PIX_ON, PIX_OFF]
-grid_size = 150
+grid_size = 100
 i_update = 60
 
 
@@ -68,7 +69,7 @@ def main():
         pointer = c_array.ctypes.data_as(ctypes.c_void_p)
 
         print("Texture converted")
-        SDL_UpdateTexture(texture, None, pointer, grid_size)
+        SDL_UpdateTexture(texture, None, pointer, grid_size * 4)
         print("Texture updated")
         SDL_RenderClear(renderer)
         SDL_RenderCopy(renderer, texture, None, None)
